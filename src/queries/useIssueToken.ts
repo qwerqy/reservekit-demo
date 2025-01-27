@@ -12,7 +12,7 @@ export const useIssueToken = (
 		...opts,
 		queryKey: ['token'],
 		queryFn: async () => {
-			const { data } = await axiosInstance.get('/v1/issue-api-key')
+			const { data } = await axiosInstance.post('/v1/issue-api-key')
 			return data
 		},
 		staleTime: 1000 * 60 * 14, // 14 minutes (refresh 1 minute before expiration)
