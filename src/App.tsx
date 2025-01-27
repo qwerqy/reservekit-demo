@@ -192,6 +192,7 @@ function App() {
 
 					{error && (
 						<p className="text-red-500">
+							{/* @ts-ignore */}
 							{error.message}: {error.response?.data?.error}
 						</p>
 					)}

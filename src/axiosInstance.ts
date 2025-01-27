@@ -2,6 +2,7 @@ import axios from 'axios'
 import { useCookies } from 'react-cookie'
 
 const axiosInstance = axios.create({
+	// @ts-ignore
 	baseURL: import.meta.env.VITE_API_URL,
 })
 
@@ -18,7 +19,9 @@ axiosInstance.interceptors.response.use(
 			try {
 				// Get a new token
 				const response = await axios.post(
+					// @ts-ignore
 					`${import.meta.env.VITE_API_URL}/v1/issue-api-key?p_key=${
+						// @ts-ignore
 						import.meta.env.VITE_RESERVEKIT_PUBLIC_KEY
 					}`,
 				)
