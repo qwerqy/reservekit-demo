@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import axios from 'axios'
+import axiosInstance from '../axiosInstance'
 
 interface Booking {
 	id: string
@@ -14,8 +14,14 @@ export const useBookings = () => {
 	return useQuery<Booking[]>({
 		queryKey: ['bookings'],
 		queryFn: async () => {
-			const { data } = await axios.get('YOUR_API_URL/bookings')
+			const { data } = await axiosInstance.get(
+				`/v1/bookings?service_id=${
+					// @ts-ignore
+					import.meta.env.VITE_RESERVEKIT_SERVICE_ID
+				}`,
+			)
 			return data
 		},
+		staleTime: 1000 * 60 * 15, // 15 minutes
 	})
 }

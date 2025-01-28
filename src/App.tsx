@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { format } from 'date-fns'
-import { useIssueToken } from './queries/useIssueToken'
 import { useCookies } from 'react-cookie'
 import { useService } from './queries/useService'
 import { TimeSlot, useTimeSlots } from './queries/useTimeSlots'
@@ -26,19 +25,9 @@ function App() {
 	const [filteredTimeSlots, setFilteredTimeSlots] = useState<
 		TimeSlot['data']['time_slots'] | null
 	>(null)
-	const [cookies, setCookie] = useCookies(['token'])
-	const { data: token } = useIssueToken({
-		enabled: !cookies.token,
-	})
-	const { data: service } = useService('1')
+	const { data: service } = useService()
 	const { data: timeSlots } = useTimeSlots()
-	const {
-		mutate: createBooking,
-		error,
-		data: createBookingData,
-	} = useCreateBooking()
-
-	console.log(createBookingData, error)
+	const { mutate: createBooking, error } = useCreateBooking()
 
 	useEffect(() => {
 		if (timeSlots?.data?.time_slots && appointment.date) {
@@ -59,20 +48,15 @@ function App() {
 		}
 	}, [timeSlots, appointment.date])
 
-	useEffect(() => {
-		if (token && !cookies.token) {
-			setCookie('token', token.data, {
-				expires: new Date(Date.now() + 1000 * 60 * 15), // 15 minutes
-			})
-		}
-	}, [token])
-
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault()
 		appointment.time_slot_id = Number(appointment.time_slot_id)
 		console.log(appointment)
-		createBooking(appointment)
-		alert('Appointment scheduled successfully!')
+		createBooking(appointment, {
+			onSuccess: () => {
+				alert('Appointment scheduled successfully!')
+			},
+		})
 	}
 
 	const handleChange = (

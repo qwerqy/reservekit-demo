@@ -10,7 +10,13 @@ export const useCreateBooking = () => {
 
 	return useMutation({
 		mutationFn: async (bookingData: CreateBookingData) => {
-			const { data } = await axios.post('/v1/bookings', bookingData)
+			const { data } = await axios.post(
+				`/v1/bookings?service_id=${
+					// @ts-ignore
+					import.meta.env.VITE_RESERVEKIT_SERVICE_ID
+				}`,
+				bookingData,
+			)
 			return data
 		},
 		onSuccess: () => {
