@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { format } from 'date-fns'
-import { useCookies } from 'react-cookie'
 import { useService } from './queries/useService'
 import { TimeSlot, useTimeSlots } from './queries/useTimeSlots'
 import { useCreateBooking } from './mutations/useCreateBooking'
