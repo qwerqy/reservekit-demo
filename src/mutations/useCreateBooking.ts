@@ -1,23 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAxiosWithToken } from '../axiosInstance'
-import { Appointment } from '../App'
+import { serviceClient } from '../reservekit-client'
 
-interface CreateBookingData extends Appointment {}
+import { CreateBookingPayload } from 'reservekitjs'
 
 export const useCreateBooking = () => {
-	const axios = useAxiosWithToken()
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: async (bookingData: CreateBookingData) => {
-			const { data } = await axios.post(
-				`/v1/bookings?service_id=${
-					// @ts-ignore
-					import.meta.env.VITE_RESERVEKIT_SERVICE_ID
-				}`,
-				bookingData,
-			)
-			return data
+		mutationFn: async (bookingData: CreateBookingPayload) => {
+			const service = await serviceClient()
+			return service?.createBooking(bookingData as CreateBookingPayload)
 		},
 		onSuccess: () => {
 			// Invalidate the bookings query to refetch the updated list

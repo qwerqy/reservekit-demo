@@ -1,83 +1,70 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { useService } from './queries/useService'
-import { TimeSlot, useTimeSlots } from './queries/useTimeSlots'
+import { useTimeSlots } from './queries/useTimeSlots'
 import { useCreateBooking } from './mutations/useCreateBooking'
+import { ITimeSlot } from 'reservekitjs'
+import { z } from 'zod'
+import { useForm, useWatch } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 
-export interface Appointment {
-	customer_name?: string
-	customer_email?: string
-	customer_phone?: string
-	date: string
-	time_slot_id: number | null
-}
+const formSchema = z.object({
+	customer_name: z.string().optional(),
+	customer_email: z.string().optional(),
+	customer_phone: z.string().optional(),
+	date: z.string().date(),
+	time_slot_id: z.string().transform(val => Number(val)),
+})
 
 function App() {
-	const [appointment, setAppointment] = useState<Appointment>({
-		customer_name: '',
-		customer_email: '',
-		customer_phone: '',
-		date: '',
-		time_slot_id: null,
+	const form = useForm<z.infer<typeof formSchema>>({
+		resolver: zodResolver(formSchema),
 	})
 
 	const [filteredTimeSlots, setFilteredTimeSlots] = useState<
-		TimeSlot['data']['time_slots'] | null
+		ITimeSlot[] | null
 	>(null)
 	const { data: service } = useService()
 	const { data: timeSlots } = useTimeSlots()
 	const { mutate: createBooking, error } = useCreateBooking()
 
+	const { date } = useWatch({
+		control: form.control,
+	})
+
+	console.log(service)
+
 	useEffect(() => {
-		if (timeSlots?.data?.time_slots && appointment.date) {
-			console.log(
-				timeSlots.data.time_slots.filter(timeSlot => {
-					console.log(timeSlot.day_of_week)
-					return (
-						timeSlot.day_of_week === new Date(appointment.date).getDay() - 1
-					)
-				}),
-			)
+		if (timeSlots && date) {
 			setFilteredTimeSlots(
-				timeSlots.data.time_slots.filter(
+				timeSlots.filter(
 					timeSlot =>
-						timeSlot.day_of_week === new Date(appointment.date).getDay() - 1,
+						timeSlot.day_of_week ===
+						new Date(date as unknown as Date).getDay() - 1,
 				),
 			)
 		}
-	}, [timeSlots, appointment.date])
+	}, [timeSlots, date])
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault()
-		appointment.time_slot_id = Number(appointment.time_slot_id)
-		console.log(appointment)
-		createBooking(appointment, {
+	const handleSubmit = (values: z.infer<typeof formSchema>) => {
+		createBooking(values, {
 			onSuccess: () => {
 				alert('Appointment scheduled successfully!')
 			},
 		})
 	}
 
-	const handleChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-	) => {
-		const { name, value } = e.target
-		setAppointment(prev => ({
-			...prev,
-			[name]: value,
-		}))
-	}
-
 	return (
 		<div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
 			<div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-8">
 				<h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-					{service?.data.name}
+					{service?.name}
 				</h1>
 				<p className="text-sm text-gray-600 mb-6 text-center">
-					{service?.data.description}
+					{service?.description}
 				</p>
-				<form onSubmit={handleSubmit} className="space-y-6">
+
+				<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
 					<div>
 						<label
 							htmlFor="customer_name"
@@ -88,9 +75,7 @@ function App() {
 						<input
 							type="text"
 							id="customer_name"
-							name="customer_name"
-							value={appointment.customer_name}
-							onChange={handleChange}
+							{...form.register('customer_name')}
 							className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
 						/>
 					</div>
@@ -105,9 +90,7 @@ function App() {
 						<input
 							type="email"
 							id="customer_email"
-							name="customer_email"
-							value={appointment.customer_email}
-							onChange={handleChange}
+							{...form.register('customer_email')}
 							className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
 						/>
 					</div>
@@ -122,9 +105,7 @@ function App() {
 						<input
 							type="tel"
 							id="customer_phone"
-							name="customer_phone"
-							value={appointment.customer_phone}
-							onChange={handleChange}
+							{...form.register('customer_phone')}
 							className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
 						/>
 					</div>
@@ -139,11 +120,7 @@ function App() {
 						<input
 							type="date"
 							id="date"
-							name="date"
-							required
-							min={format(new Date(), 'yyyy-MM-dd')}
-							value={appointment.date}
-							onChange={handleChange}
+							{...form.register('date')}
 							className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
 						/>
 					</div>
@@ -157,10 +134,7 @@ function App() {
 						</label>
 						<select
 							id="time_slot_id"
-							name="time_slot_id"
-							required
-							value={appointment.time_slot_id?.toString() ?? ''}
-							onChange={handleChange}
+							{...form.register('time_slot_id')}
 							className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
 						>
 							<option value="">Select a time slot</option>
